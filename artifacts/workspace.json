@@ -1,0 +1,17 @@
+{
+  "root": "/home/dev/feedback/uid23361",
+  "B": "/home/dev/feedback/uid23361",
+  "sha": "4fb298ec1af0686211dc2def73f4f41c2ce19ce5",
+  "wslDistro": "Ubuntu-26.04",
+  "source": {
+    "owner": "strukturag",
+    "repo": "libde265",
+    "sha": "4fb298ec1af0686211dc2def73f4f41c2ce19ce5"
+  },
+  "fork": {
+    "owner": "Rrr119",
+    "repo": "libde265",
+    "cloneUrl": "https://github.com/Rrr119/libde265.git"
+  },
+  "at": "2026-11-17T18:28:06.131Z"
+}

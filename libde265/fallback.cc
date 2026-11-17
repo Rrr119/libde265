@@ -151,4 +151,6 @@ void init_acceleration_functions_fallback(struct acceleration_functions* accel)
 
   accel->deblock_luma_8   = deblock_luma_8_fallback;
   accel->deblock_chroma_8 = deblock_chroma_8_fallback;
+  accel->deblock_luma_16  = deblock_luma_16_fallback;
+  accel->deblock_chroma_16 = deblock_chroma_16_fallback;
 }

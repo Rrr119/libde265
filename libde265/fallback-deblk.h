@@ -129,5 +129,10 @@ void deblock_luma_8_fallback(uint8_t* ptr, ptrdiff_t stride, int vertical,
                              int dE, int dEp, int dEq, int tc, int filterP, int filterQ);
 void deblock_chroma_8_fallback(uint8_t* ptr, ptrdiff_t stride, int vertical,
                                int tc, int filterP, int filterQ);
+void deblock_luma_16_fallback(uint16_t* ptr, ptrdiff_t stride, int vertical,
+                              int dE, int dEp, int dEq, int tc, int filterP, int filterQ,
+                              int bit_depth);
+void deblock_chroma_16_fallback(uint16_t* ptr, ptrdiff_t stride, int vertical,
+                                int tc, int filterP, int filterQ, int bit_depth);
 
 #endif

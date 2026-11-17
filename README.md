@@ -9,7 +9,12 @@ It is written from scratch and has a plain C API to enable
 a simple integration into other software.
 
 libde265 supports WPP and tile-based multithreading and includes SSE, AVX2 and AVX-512
-optimizations.
+optimizations. On x86, the SSE4.1 path covers both 8-bit and high-bit-depth
+decoding: 10-bit streams use SIMD inverse transforms, and motion compensation,
+weighted prediction, intra prediction and deblocking are accelerated for
+9-16 bit pixels (the int16 prediction path covers 9-12 bit). These kernels are
+bit-identical to the scalar fallback and are selected at runtime after checking
+the CPU.
 The decoder includes all features of the Main profile, and it supports Main 10 and the
 Range Extensions: bit depths from 8 to 16 bit (independently for luma and chroma), the
 4:2:0, 4:2:2, 4:4:4 and monochrome chroma formats, and the Range Extensions coding tools.
@@ -117,6 +122,26 @@ Additional logging information can be turned on and off using these `./configure
 <pre>
   -DDE265_LOG_LEVEL={error;info;debug;trace}
 </pre>
+
+SIMD kernels can be disabled at build time with `-DENABLE_SIMD=off`; AVX2 and
+AVX-512 kernels can be disabled independently with `-DENABLE_AVX2=off` and
+`-DENABLE_AVX512=off`.
+
+High-bit-depth SIMD benchmark
+=============================
+
+The development test binary contains a correctness and timing benchmark for the
+high-bit-depth kernels. It compares every kernel against the scalar fallback and
+then reports the measured speedup:
+
+```
+cmake -S . -B build -DENABLE_INTERNAL_DEVELOPMENT_TOOLS=ON
+cmake --build build
+./build/dev-tools/tests highbit-simd
+```
+
+Pass `-DENABLE_SIMD=off` to the same test to verify the scalar paths on a build
+without SIMD.
 
 
 Building using vcpkg

@@ -275,6 +275,13 @@ struct acceleration_functions
   void (*deblock_chroma_8)(uint8_t* ptr, ptrdiff_t stride, int vertical,
                            int tc, int filterP, int filterQ);
 
+  // High bit-depth deblocking (same contract as the 8-bit kernels).
+  void (*deblock_luma_16)(uint16_t* ptr, ptrdiff_t stride, int vertical,
+                          int dE, int dEp, int dEq, int tc, int filterP, int filterQ,
+                          int bit_depth);
+  void (*deblock_chroma_16)(uint16_t* ptr, ptrdiff_t stride, int vertical,
+                            int tc, int filterP, int filterQ, int bit_depth);
+
   void (*rdpcm_v)(int32_t* residual, const int16_t* coeffs, int nT,int tsShift,int bdShift);
   void (*rdpcm_h)(int32_t* residual, const int16_t* coeffs, int nT,int tsShift,int bdShift);
 

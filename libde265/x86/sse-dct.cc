@@ -495,60 +495,63 @@ void ff_hevc_transform_4x4_luma_add_8_sse4(uint8_t *_dst, const int16_t *coeffs,
 }
 #endif // SSE4.1
 
-#if 0
+#if HAVE_SSE4_1
+// The 10-bit kernels below were originally written against FFmpeg's
+// av_clip_uintp2().  Keep the name local to this file so the kernels stay
+// close to their original form, but make the clipping explicit here.
+static inline int av_clip_uintp2(int a, int p)
+{
+  return Clip_BitDepth(a, p);
+}
+
 void ff_hevc_transform_4x4_luma_add_10_sse4(uint8_t *_dst, const int16_t *coeffs,
         ptrdiff_t _stride) {
-    int i,j;
-    uint8_t shift_2nd = 10; // 20 - Bit depth
-    uint16_t add_2nd = 1 << 9; //(1 << (shift_2nd - 1))
+    const int shift_2nd = 10; // 20 - Bit depth
+    const int add_2nd = 1 << 9; // (1 << (shift_2nd - 1))
 
     uint16_t *dst = (uint16_t*) _dst;
-    ptrdiff_t stride = _stride/(sizeof(uint16_t));
-    int16_t *src = coeffs;
-    __m128i m128iAdd, S0, S8, m128iTmp1, m128iTmp2, m128iAC, m128iBD, m128iA,
-            m128iD;
+    ptrdiff_t stride = _stride / sizeof(uint16_t);
+    const int16_t *src = coeffs;
 
+    __m128i m128iAdd, S0, S8, m128iTmp1, m128iTmp2, m128iAC, m128iBD,
+            m128iA, m128iD;
     m128iAdd = _mm_set1_epi32(64);
 
-    S0 = _mm_loadu_si128((__m128i *) (src));
-    S8 = _mm_loadu_si128((__m128i *) (src + 8));
+    S0 = _mm_load_si128((__m128i *) (src));
+    S8 = _mm_load_si128((__m128i *) (src + 8));
 
     m128iAC = _mm_unpacklo_epi16(S0, S8);
     m128iBD = _mm_unpackhi_epi16(S0, S8);
 
     m128iTmp1 = _mm_madd_epi16(m128iAC,
-            _mm_loadu_si128((__m128i *) (transform4x4_luma[0])));
+            _mm_load_si128((__m128i *) (transform4x4_luma[0])));
     m128iTmp2 = _mm_madd_epi16(m128iBD,
-            _mm_loadu_si128((__m128i *) (transform4x4_luma[1])));
-    S0 = _mm_add_epi32(m128iTmp1, m128iTmp2);
-    S0 = _mm_add_epi32(S0, m128iAdd);
-    S0 = _mm_srai_epi32(S0, shift_1st);
+            _mm_load_si128((__m128i *) (transform4x4_luma[1])));
+    S0 = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(m128iTmp1, m128iTmp2), m128iAdd),
+                        shift_1st);
 
     m128iTmp1 = _mm_madd_epi16(m128iAC,
-            _mm_loadu_si128((__m128i *) (transform4x4_luma[2])));
+            _mm_load_si128((__m128i *) (transform4x4_luma[2])));
     m128iTmp2 = _mm_madd_epi16(m128iBD,
-            _mm_loadu_si128((__m128i *) (transform4x4_luma[3])));
-    S8 = _mm_add_epi32(m128iTmp1, m128iTmp2);
-    S8 = _mm_add_epi32(S8, m128iAdd);
-    S8 = _mm_srai_epi32(S8, shift_1st);
+            _mm_load_si128((__m128i *) (transform4x4_luma[3])));
+    S8 = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(m128iTmp1, m128iTmp2), m128iAdd),
+                        shift_1st);
 
     m128iA = _mm_packs_epi32(S0, S8);
 
     m128iTmp1 = _mm_madd_epi16(m128iAC,
-            _mm_loadu_si128((__m128i *) (transform4x4_luma[4])));
+            _mm_load_si128((__m128i *) (transform4x4_luma[4])));
     m128iTmp2 = _mm_madd_epi16(m128iBD,
-            _mm_loadu_si128((__m128i *) (transform4x4_luma[5])));
-    S0 = _mm_add_epi32(m128iTmp1, m128iTmp2);
-    S0 = _mm_add_epi32(S0, m128iAdd);
-    S0 = _mm_srai_epi32(S0, shift_1st);
+            _mm_load_si128((__m128i *) (transform4x4_luma[5])));
+    S0 = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(m128iTmp1, m128iTmp2), m128iAdd),
+                        shift_1st);
 
     m128iTmp1 = _mm_madd_epi16(m128iAC,
-            _mm_loadu_si128((__m128i *) (transform4x4_luma[6])));
+            _mm_load_si128((__m128i *) (transform4x4_luma[6])));
     m128iTmp2 = _mm_madd_epi16(m128iBD,
-            _mm_loadu_si128((__m128i *) (transform4x4_luma[7])));
-    S8 = _mm_add_epi32(m128iTmp1, m128iTmp2);
-    S8 = _mm_add_epi32(S8, m128iAdd);
-    S8 = _mm_srai_epi32(S8, shift_1st);
+            _mm_load_si128((__m128i *) (transform4x4_luma[7])));
+    S8 = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(m128iTmp1, m128iTmp2), m128iAdd),
+                        shift_1st);
 
     m128iD = _mm_packs_epi32(S0, S8);
 
@@ -558,7 +561,7 @@ void ff_hevc_transform_4x4_luma_add_10_sse4(uint8_t *_dst, const int16_t *coeffs
     m128iA = _mm_unpacklo_epi16(S0, S8);
     m128iD = _mm_unpackhi_epi16(S0, S8);
 
-    /*   ###################    */
+    /* second (horizontal) pass */
     m128iAdd = _mm_set1_epi32(add_2nd);
 
     m128iAC = _mm_unpacklo_epi16(m128iA, m128iD);
@@ -568,17 +571,15 @@ void ff_hevc_transform_4x4_luma_add_10_sse4(uint8_t *_dst, const int16_t *coeffs
             _mm_load_si128((__m128i *) (transform4x4_luma[0])));
     m128iTmp2 = _mm_madd_epi16(m128iBD,
             _mm_load_si128((__m128i *) (transform4x4_luma[1])));
-    S0 = _mm_add_epi32(m128iTmp1, m128iTmp2);
-    S0 = _mm_add_epi32(S0, m128iAdd);
-    S0 = _mm_srai_epi32(S0, shift_2nd);
+    S0 = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(m128iTmp1, m128iTmp2), m128iAdd),
+                        shift_2nd);
 
     m128iTmp1 = _mm_madd_epi16(m128iAC,
             _mm_load_si128((__m128i *) (transform4x4_luma[2])));
     m128iTmp2 = _mm_madd_epi16(m128iBD,
             _mm_load_si128((__m128i *) (transform4x4_luma[3])));
-    S8 = _mm_add_epi32(m128iTmp1, m128iTmp2);
-    S8 = _mm_add_epi32(S8, m128iAdd);
-    S8 = _mm_srai_epi32(S8, shift_2nd);
+    S8 = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(m128iTmp1, m128iTmp2), m128iAdd),
+                        shift_2nd);
 
     m128iA = _mm_packs_epi32(S0, S8);
 
@@ -586,39 +587,45 @@ void ff_hevc_transform_4x4_luma_add_10_sse4(uint8_t *_dst, const int16_t *coeffs
             _mm_load_si128((__m128i *) (transform4x4_luma[4])));
     m128iTmp2 = _mm_madd_epi16(m128iBD,
             _mm_load_si128((__m128i *) (transform4x4_luma[5])));
-    S0 = _mm_add_epi32(m128iTmp1, m128iTmp2);
-    S0 = _mm_add_epi32(S0, m128iAdd);
-    S0 = _mm_srai_epi32(S0, shift_2nd);
+    S0 = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(m128iTmp1, m128iTmp2), m128iAdd),
+                        shift_2nd);
 
     m128iTmp1 = _mm_madd_epi16(m128iAC,
             _mm_load_si128((__m128i *) (transform4x4_luma[6])));
     m128iTmp2 = _mm_madd_epi16(m128iBD,
             _mm_load_si128((__m128i *) (transform4x4_luma[7])));
-    S8 = _mm_add_epi32(m128iTmp1, m128iTmp2);
-    S8 = _mm_add_epi32(S8, m128iAdd);
-    S8 = _mm_srai_epi32(S8, shift_2nd);
+    S8 = _mm_srai_epi32(_mm_add_epi32(_mm_add_epi32(m128iTmp1, m128iTmp2), m128iAdd),
+                        shift_2nd);
 
     m128iD = _mm_packs_epi32(S0, S8);
 
-    _mm_storeu_si128((__m128i *) (src), m128iA);
-    _mm_storeu_si128((__m128i *) (src + 8), m128iD);
-    j = 0;
-    for (i = 0; i < 2; i++) {
-        dst[0] = av_clip_uintp2(dst[0] + src[j],10);
-        dst[1] = av_clip_uintp2(dst[1] + src[j + 4],10);
-        dst[2] = av_clip_uintp2(dst[2] + src[j + 8],10);
-        dst[3] = av_clip_uintp2(dst[3] + src[j + 12],10);
-        j += 1;
-        dst += stride;
-        dst[0] = av_clip_uintp2(dst[0] + src[j],10);
-        dst[1] = av_clip_uintp2(dst[1] + src[j + 4],10);
-        dst[2] = av_clip_uintp2(dst[2] + src[j + 8],10);
-        dst[3] = av_clip_uintp2(dst[3] + src[j + 12],10);
-        j += 1;
-        dst += stride;
-    }
+    S0 = _mm_move_epi64(m128iA);          // rows 0 and 1
+    S8 = _mm_move_epi64(m128iD);          // rows 2 and 3
+    m128iA = _mm_srli_si128(m128iA, 8);   // row 1
+    m128iD = _mm_srli_si128(m128iD, 8);   // row 3
+    m128iTmp1 = _mm_unpacklo_epi16(S0, m128iA);
+    m128iTmp2 = _mm_unpacklo_epi16(S8, m128iD);
+    S0 = _mm_unpacklo_epi32(m128iTmp1, m128iTmp2); // rows 0 and 1
+    S8 = _mm_unpackhi_epi32(m128iTmp1, m128iTmp2); // rows 2 and 3
 
+    const __m128i vmax = _mm_set1_epi32(1023);
+    const __m128i vzero = _mm_setzero_si128();
+
+    for (int y = 0; y < 4; y++) {
+        __m128i row = (y < 2) ? S0 : S8;
+        if (y & 1) row = _mm_srli_si128(row, 8);
+
+        __m128i pix = _mm_cvtepu16_epi32(
+                _mm_loadl_epi64((__m128i*) (dst + y*stride)));
+        __m128i res = _mm_cvtepi16_epi32(row);
+
+        __m128i sum = _mm_add_epi32(pix, res);
+        sum = _mm_min_epi32(_mm_max_epi32(sum, vzero), vmax);
+        __m128i out = _mm_packus_epi32(sum, sum);
+        _mm_storel_epi64((__m128i*) (dst + y*stride), out);
+    }
 }
+
 #endif
 
 
@@ -743,7 +750,7 @@ void ff_hevc_transform_4x4_add_8_sse4(uint8_t *_dst, const int16_t *coeffs,
 }
 #endif
 
-#if 0
+#if HAVE_SSE4_1
 void ff_hevc_transform_4x4_add_10_sse4(uint8_t *_dst, const int16_t *coeffs,
         ptrdiff_t _stride) {
     int i;
@@ -752,7 +759,7 @@ void ff_hevc_transform_4x4_add_10_sse4(uint8_t *_dst, const int16_t *coeffs,
 
     uint16_t *dst = (uint16_t*) _dst;
     ptrdiff_t stride = _stride/2;
-    int16_t *src = coeffs;
+    int16_t *src = const_cast<int16_t*>(coeffs);
 
     int j;
         __m128i S0, S8, m128iAdd, m128Tmp, E1, E2, O1, O2, m128iA, m128iD;
@@ -1173,13 +1180,13 @@ void ff_hevc_transform_8x8_add_8_sse4(uint8_t *_dst, const int16_t *coeffs,
 }
 #endif
 
-#if 0
+#if HAVE_SSE4_1
 void ff_hevc_transform_8x8_add_10_sse4(uint8_t *_dst, const int16_t *coeffs,
         ptrdiff_t _stride) {
     int i;
     uint16_t *dst = (uint16_t*) _dst;
     ptrdiff_t stride = _stride / sizeof(uint16_t);
-    int16_t *src = coeffs;
+    int16_t *src = const_cast<int16_t*>(coeffs);
     uint8_t shift_2nd = 10; // 20 - Bit depth
     uint16_t add_2nd = 1 << 9; //(1 << (shift_2nd - 1))
 
@@ -2245,13 +2252,13 @@ void ff_hevc_transform_16x16_add_8_sse4(uint8_t *_dst, const int16_t *coeffs,
 #endif
 
 
-#if 0
+#if HAVE_SSE4_1
 void ff_hevc_transform_16x16_add_10_sse4(uint8_t *_dst, const int16_t *coeffs,
         ptrdiff_t _stride) {
     int i;
     uint16_t *dst = (uint16_t*) _dst;
     ptrdiff_t stride = _stride / 2;
-    int16_t *src = coeffs;
+    int16_t *src = const_cast<int16_t*>(coeffs);
     int32_t shift;
     uint8_t shift_2nd = 10; //20 - bit depth
     uint16_t add_2nd = 1 << 9; //shift - 1;
@@ -5210,7 +5217,7 @@ void ff_hevc_transform_32x32_add_8_sse4(uint8_t *_dst, const int16_t *coeffs,
 #endif
 
 
-#if 0
+#if HAVE_SSE4_1
 void ff_hevc_transform_32x32_add_10_sse4(uint8_t *_dst, const int16_t *coeffs,
         ptrdiff_t _stride) {
     int i, j;
@@ -5219,7 +5226,7 @@ void ff_hevc_transform_32x32_add_10_sse4(uint8_t *_dst, const int16_t *coeffs,
     int shift;
     uint8_t shift_2nd = 10; //20 - bit depth
     uint16_t add_2nd = 1<<9; //shift2 - 1
-    int16_t *src = coeffs;
+    int16_t *src = const_cast<int16_t*>(coeffs);
 
     __m128i m128iS0, m128iS1, m128iS2, m128iS3, m128iS4, m128iS5, m128iS6,
             m128iS7, m128iS8, m128iS9, m128iS10, m128iS11, m128iS12, m128iS13,

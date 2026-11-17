@@ -27,6 +27,7 @@
 #include "x86/sse-dct.h"
 #include "x86/sse-intrapred.h"
 #include "x86/sse-deblk.h"
+#include "x86/sse-highbit.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -130,6 +131,49 @@ void init_acceleration_functions_sse(struct acceleration_functions* accel)
     accel->deblock_luma_8   = deblock_luma_8_sse4;
     // chroma deblock stays on the scalar fallback: the filter is too cheap to
     // amortize the SIMD load/transpose/scatter overhead (SSE measured slower).
+
+    // --- high bit depth (9..16 bit pixels) ---
+    accel->put_unweighted_pred_16   = put_unweighted_pred_16_sse4;
+    accel->put_weighted_pred_avg_16 = put_weighted_pred_avg_16_sse4;
+    accel->put_weighted_pred_16     = put_weighted_pred_16_sse4;
+    accel->put_weighted_bipred_16   = put_weighted_bipred_16_sse4;
+
+    accel->put_hevc_epel_16    = put_hevc_epel_16_sse4;
+    accel->put_hevc_epel_h_16  = put_hevc_epel_h_16_sse4;
+    accel->put_hevc_epel_v_16  = put_hevc_epel_v_16_sse4;
+    accel->put_hevc_epel_hv_16 = put_hevc_epel_hv_16_sse4;
+
+    accel->put_hevc_qpel_16[0][0] = put_hevc_qpel_0_0_16_sse4;
+    accel->put_hevc_qpel_16[0][1] = put_hevc_qpel_0_1_16_sse4;
+    accel->put_hevc_qpel_16[0][2] = put_hevc_qpel_0_2_16_sse4;
+    accel->put_hevc_qpel_16[0][3] = put_hevc_qpel_0_3_16_sse4;
+    accel->put_hevc_qpel_16[1][0] = put_hevc_qpel_1_0_16_sse4;
+    accel->put_hevc_qpel_16[1][1] = put_hevc_qpel_1_1_16_sse4;
+    accel->put_hevc_qpel_16[1][2] = put_hevc_qpel_1_2_16_sse4;
+    accel->put_hevc_qpel_16[1][3] = put_hevc_qpel_1_3_16_sse4;
+    accel->put_hevc_qpel_16[2][0] = put_hevc_qpel_2_0_16_sse4;
+    accel->put_hevc_qpel_16[2][1] = put_hevc_qpel_2_1_16_sse4;
+    accel->put_hevc_qpel_16[2][2] = put_hevc_qpel_2_2_16_sse4;
+    accel->put_hevc_qpel_16[2][3] = put_hevc_qpel_2_3_16_sse4;
+    accel->put_hevc_qpel_16[3][0] = put_hevc_qpel_3_0_16_sse4;
+    accel->put_hevc_qpel_16[3][1] = put_hevc_qpel_3_1_16_sse4;
+    accel->put_hevc_qpel_16[3][2] = put_hevc_qpel_3_2_16_sse4;
+    accel->put_hevc_qpel_16[3][3] = put_hevc_qpel_3_3_16_sse4;
+
+    accel->transform_4x4_dst_add_16 = transform_4x4_dst_add_16_sse4;
+    accel->transform_add_16[0] = transform_4x4_add_16_sse4;
+    accel->transform_add_16[1] = transform_8x8_add_16_sse4;
+    accel->transform_add_16[2] = transform_16x16_add_16_sse4;
+    accel->transform_add_16[3] = transform_32x32_add_16_sse4;
+
+    accel->intra_pred_dc_16      = intra_pred_dc_16_sse4;
+    accel->intra_pred_planar_16  = intra_pred_planar_16_sse4;
+    accel->intra_pred_angular_16 = intra_pred_angular_16_sse4;
+
+    accel->deblock_luma_16   = deblock_luma_16_sse4;
+    // High-bit-depth chroma deblocking stays on the scalar fallback for the
+    // same reason as the 8-bit path: the filter is too cheap to amortize the
+    // load/transpose/store overhead (measured slower in the highbit-simd test).
   }
 #endif
 }

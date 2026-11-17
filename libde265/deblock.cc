@@ -596,8 +596,9 @@ void edge_filtering_luma_internal(de265_image* img, bool vertical,
                                                      dE,dEp,dEq,tc, filterP,filterQ);
           }
           else {
-            deblock_luma_kernel<pixel_t>(ptr, stride, vertical,
-                                         dE,dEp,dEq,tc, filterP,filterQ, bitDepth_Y);
+            img->decctx->acceleration.deblock_luma_16((uint16_t*)ptr, stride, vertical,
+                                                      dE,dEp,dEq,tc, filterP,filterQ,
+                                                      bitDepth_Y);
           }
         }
       }
@@ -736,7 +737,8 @@ void edge_filtering_chroma_internal(de265_image* img, bool vertical,
               img->decctx->acceleration.deblock_chroma_8((uint8_t*)ptr, stride, 1, tc, filterP,filterQ);
             }
             else {
-              deblock_chroma_kernel<pixel_t>(ptr, stride, true, tc, filterP,filterQ, bitDepth_C);
+              img->decctx->acceleration.deblock_chroma_16((uint16_t*)ptr, stride, 1, tc,
+                                                          filterP,filterQ, bitDepth_C);
             }
           }
           else {
@@ -752,7 +754,8 @@ void edge_filtering_chroma_internal(de265_image* img, bool vertical,
               img->decctx->acceleration.deblock_chroma_8((uint8_t*)ptr, stride, 0, tc, filterP,filterQ);
             }
             else {
-              deblock_chroma_kernel<pixel_t>(ptr, stride, false, tc, filterP,filterQ, bitDepth_C);
+              img->decctx->acceleration.deblock_chroma_16((uint16_t*)ptr, stride, 0, tc,
+                                                          filterP,filterQ, bitDepth_C);
             }
           }
         }

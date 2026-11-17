@@ -23,6 +23,9 @@
 
 #include "acceleration.h"
 
+// Installs the runtime-checked SSE4.1 kernels.  Besides the 8-bit kernels,
+// this includes the 10-bit inverse transforms and the high-bit-depth motion
+// compensation, weighted prediction, intra prediction and deblocking kernels.
 void init_acceleration_functions_sse(struct acceleration_functions* accel);
 
 // Overrides selected transform kernels with AVX2 versions, but only if the
